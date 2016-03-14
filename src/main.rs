@@ -1,15 +1,15 @@
 extern crate hyper;
 extern crate rusqlite;
-extern crate rustc_serialize;
 
-//mod string;
+mod string;
 mod server;
-//mod sql;
-//mod key_storage;
+mod sql;
+mod key_storage;
 
 fn main() {
-    //string::main();
+    string::main();
     //sql::main();
+    key_storage::main();
     server::main();
     println!("exec");
 }

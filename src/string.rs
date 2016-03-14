@@ -84,7 +84,11 @@ fn array_to_vec(arr: &[u8]) -> Vec<u8> {
     return arr.iter().cloned().collect::<Vec<u8>>();
 }
 
-pub fn prepare_string_vec(input: &Vec<&str>) -> Vec<u8> {
+pub fn prepare_string_vec(input: &Vec<String>) -> Vec<u8> {
+   collapse_byte_vec(&string_vec_into_byte_vec_vec(&input))
+}
+
+pub fn prepare_str_vec(input: &Vec<&str>) -> Vec<u8> {
     collapse_byte_vec(&str_vec_into_byte_vec_vec(&input))
 }
 
@@ -96,7 +100,7 @@ fn serialize_test() {
     // "test"
     
     let vec_s = vec!("ha fd","hudf  ");
-    let x = prepare_string_vec(&vec_s);
+    let x = prepare_str_vec(&vec_s);
     println!("{:?}", &x);
     let y = read_output_blob(&x);
     println!("{:?}", &y);

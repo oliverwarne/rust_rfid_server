@@ -27,7 +27,7 @@ fn sql_stuff() {
         name: "Front door".to_string(),
         status: "Working normally".to_string(),
         open: false,
-        access_by: string::prepare_string_vec(&vec!("hafd","hudf")),
+        access_by: string::prepare_str_vec(&vec!("hafd","hudf")),
     };
 
     conn.execute("INSERT INTO scanners (name, status, open, access_by)
