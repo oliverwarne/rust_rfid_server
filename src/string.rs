@@ -17,6 +17,21 @@ fn str_vec_into_byte_vec_vec(input: &Vec<&str>) -> Vec<Vec<u8>> {
     return return_vec;
 }
 
+fn string_vec_into_byte_vec_vec(input: &Vec<String>) -> Vec<Vec<u8>> {
+    let mut return_vec: Vec<Vec<u8>> = Vec::new();
+    
+    for i in input {
+        let mut byte_vec: Vec<u8> = Vec::new();
+        for c in i.as_bytes() {
+            byte_vec.push(*c);
+        }
+        return_vec.push(byte_vec);
+    }
+
+    return return_vec;
+}
+    
+
 fn byte_vec_vec_into_str_vec(input: &Vec<Vec<u8>>) -> Vec<String> {
     
     let mut return_vec: Vec<String> = Vec::new();
@@ -88,7 +103,7 @@ fn serialize_test() {
     assert!(y == vec_s);
 }
 
-fn main() {
+pub fn main() {
     serialize_test();
 }
 
