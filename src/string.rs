@@ -108,6 +108,5 @@ fn serialize_test() {
 }
 
 pub fn main() {
-    serialize_test();
 }
 

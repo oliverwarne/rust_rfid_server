@@ -3,6 +3,7 @@ use std::path::Path;
 
 use string;
 
+#[derive(Debug)]
 struct Scanner {
     id: i32,
     name: String,
@@ -12,8 +13,11 @@ struct Scanner {
 }
 
 fn sql_stuff() {
-    let db_path = Path::new("home/oliver/prog/consult/scanning/scan_serv/test.db");
+    let db_path = Path::new("~/workspace/test.sqlite3");
+    println!("{:?}",&db_path);
+    
     let conn = Connection::open(&db_path).unwrap();
+    //let conn = Connection::open_in_memory().unwrap();
     
     conn.execute("CREATE TABLE scanners (
                   id                INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,6 +38,23 @@ fn sql_stuff() {
                   VALUES ($1, $2, $3, $4)",
                  &[&test_scan.name, &test_scan.status, 
                  &test_scan.open, &test_scan.access_by]).unwrap();
+                 
+    let mut stmt = conn.prepare("SELECT id, name, status, open, access_by FROM scanners").unwrap();
+    let mut scanners = stmt.query_map(&[], |row| {
+        Scanner {
+            id: row.get(0),
+            name: row.get(1),
+            status: row.get(2),
+            open: row.get(3),
+            access_by: row.get(4)
+        }
+    }).unwrap();
+     
+    for sql_scanner in scanners {
+        let scanner: Scanner = sql_scanner.unwrap();
+        println!("Found person {:?}", &scanner);
+        println!("{:?}", string::read_output_blob(&scanner.access_by))
+    }
 }
 
 pub fn main() {

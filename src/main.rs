@@ -7,9 +7,13 @@ mod sql;
 mod key_storage;
 
 fn main() {
+    println!("str");
     string::main();
-    //sql::main();
+    println!("sql");
+    sql::main();
+    println!("key");
     key_storage::main();
+    println!("main");
     server::main();
     println!("exec");
 }
