@@ -13,7 +13,7 @@ struct Scanner {
 }
 
 pub fn get_connection() -> Connection {
-    let db_path = Path::new("./rfid_db.sqlite3");
+    let db_path = Path::new("./scanner.db");
     let conn = Connection::open(&db_path).unwrap();
     return conn;
 }
@@ -24,8 +24,8 @@ pub fn create_table() {
                   id                INTEGER PRIMARY KEY AUTOINCREMENT,
                   name              TEXT NOT NULL,
                   status            TEXT NOT NULL,
-                  open              INTEGER NOT NULL,
-                  occupied         BLOB NOT NULL
+                  avaliable         INTEGER NOT NULL,
+                  occupied          BLOB
                   )", &[]).unwrap(); // Cmon man... why cant rust have optional args
 }
 
@@ -34,7 +34,30 @@ pub fn get_occupied_bytearray(conn: &Connection, id: &i32) -> Vec<u8> {
                     row.get(0)
     }) {
         Err(why) => match why {
-                    Error::QueryReturnedNoRows => panic!("Empty query!"),
+                    // SQLite doesn't like returning blanks, so it throws an error
+                    Error::QueryReturnedNoRows => return vec![], 
+                    
+                    Error::SqliteFailure(err,err_string) => match err_string.unwrap().as_ref()
+                    {
+                        "no such table: scanners"   => panic!("Scanner table doesn't
+                                                              exist! run create_table()"),
+                        // Big ole' OR statement for handling malformed database
+                        "no such column: id"        |
+                        "no such column: name"      |
+                        "no such column: status"    |
+                        "no such column: avaliable" |
+                        "no such column: occupied"  =>
+                            panic!("Malformed database! not all columns have been createdtry running create_table()"),
+
+
+                    _ => panic!("SQLITE FAILURE IN RETREIVING BYTEARRAY"),
+                    },
+
+
+
+                    _ => { println!("{:?}", &why);
+                            panic!(why);
+                    }
         },
         Ok(val)  => val,
     }
