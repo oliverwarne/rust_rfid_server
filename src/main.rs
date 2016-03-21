@@ -11,7 +11,7 @@ use rusqlite::Connection;
 use hyper::server::{Server,Response,Request};
 
 pub fn has_access(scanner_id: &i32, input: &String, conn: &Connection) -> KeyStoreResult {
-    let key_set: KeyStore = KeyStore::from_bytes(sql::get_access_bytearray(conn,scanner_id));
+    let key_set: KeyStore = KeyStore::from_bytes(sql::get_occupied_bytearray(conn,scanner_id));
     return key_set.contains(input);
 }
 

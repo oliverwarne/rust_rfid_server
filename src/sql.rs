@@ -1,4 +1,4 @@
-use rusqlite::Connection;
+use rusqlite::{Connection,Error};
 use std::path::Path;
 
 use string;
@@ -9,11 +9,11 @@ struct Scanner {
     name: String,
     status: String,
     open: bool,
-    access_by: Vec<u8>,
+    occupied: Vec<u8>,
 }
 
 pub fn get_connection() -> Connection {
-    let db_path = Path::new("./test.sqlite3");
+    let db_path = Path::new("./rfid_db.sqlite3");
     let conn = Connection::open(&db_path).unwrap();
     return conn;
 }
@@ -25,32 +25,37 @@ pub fn create_table() {
                   name              TEXT NOT NULL,
                   status            TEXT NOT NULL,
                   open              INTEGER NOT NULL,
-                  access_by         BLOB NOT NULL
+                  occupied         BLOB NOT NULL
                   )", &[]).unwrap(); // Cmon man... why cant rust have optional args
 }
 
-pub fn get_access_bytearray(conn: &Connection, id: &i32) -> Vec<u8> {
-    conn.query_row("SELECT access_by FROM scanners WHERE id=$1", &[id], |row| {
+pub fn get_occupied_bytearray(conn: &Connection, id: &i32) -> Vec<u8> {
+    match conn.query_row("SELECT occupied FROM scanners WHERE id=$1", &[id], |row| {
                     row.get(0)
-    }).unwrap()
+    }) {
+        Err(why) => match why {
+                    Error::QueryReturnedNoRows => panic!("Empty query!"),
+        },
+        Ok(val)  => val,
+    }
 }
 
 pub fn print_all_scanner(conn: &Connection) {
-    let mut stmt = conn.prepare("SELECT id, name, status, open, access_by FROM scanners").unwrap();
+    let mut stmt = conn.prepare("SELECT id, name, status, open, occupied FROM scanners").unwrap();
     let scanners = stmt.query_map(&[], |row| {
         Scanner {
             id: row.get(0),
             name: row.get(1),
             status: row.get(2),
             open: row.get(3),
-            access_by: row.get(4)
+            occupied: row.get(4)
         }
     }).unwrap();
     
     for sql_scanner in scanners {
         let scanner: Scanner = sql_scanner.unwrap();
         print!("Found scanner #{:?}\n   Openable by: ", scanner.id);
-        print!("{:?}\n", string::read_output_blob(&scanner.access_by))
+        print!("{:?}\n", string::read_output_blob(&scanner.occupied))
     }
 }
 
@@ -62,13 +67,13 @@ fn test_insert() {
         name: "Front door".to_string(),
         status: "Working normally".to_string(),
         open: false,
-        access_by: string::prepare_str_vec(&vec!("hafd","hudf")),
+        occupied: string::prepare_str_vec(&vec!("hafd","hudf")),
     };
 
-    conn.execute("INSERT INTO scanners (name, status, open, access_by)
+    conn.execute("INSERT INTO scanners (name, status, open, occupied)
                   VALUES ($1, $2, $3, $4)",
                  &[&test_scan.name, &test_scan.status, 
-                 &test_scan.open, &test_scan.access_by]).unwrap();
+                 &test_scan.open, &test_scan.occupied]).unwrap();
     print_all_scanner(&conn);
 }
 
