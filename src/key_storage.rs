@@ -36,7 +36,7 @@ impl KeyStore {
         return return_set;
     }
 
-    pub fn contains(&self, value: &String) -> KeyStoreResult {
+    pub fn contains(&self, value: &str) -> KeyStoreResult {
         Ok(self.set.contains(value)) 
     }
     

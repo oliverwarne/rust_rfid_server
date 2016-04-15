@@ -15,8 +15,9 @@ pub fn has_access(scanner_id: &i32, input: &String, conn: &Connection) -> KeySto
     return key_set.contains(input);
 }
 
-fn access(id: &i32, key: &String) -> KeyStoreResult {
-    has_access(id, key, &sql::get_connection())
+fn get_KeyStore(scanner_id: &i32) -> KeyStore {
+    KeyStore::from_bytes(sql::get_occupied_bytearray(&sql::get_connection()
+                                                     ,scanner_id))
 }
 
 fn runthru() {
@@ -44,6 +45,13 @@ fn server() {
                                 .handle().unwrap();
 }
 */
+
+
 fn main() {
-    println!("{:?} {:?}",access(&2,&"hafd".to_string()),access(&2,&"hud".to_string()));
+    //sql::create_table()
+    runthru();
+    let keys1 = get_KeyStore(&1);
+    println!("{:?}",keys1.contains("test"));
+    let keys2 = get_KeyStore(&2);
+    let keys3 = get_KeyStore(&3);
 }

@@ -8,7 +8,7 @@ struct Scanner {
     id: i32,
     name: String,
     status: String,
-    open: bool,
+    avaliable: bool,
     occupied: Vec<u8>,
 }
 
@@ -29,6 +29,28 @@ pub fn create_table() {
                   )", &[]).unwrap(); // Cmon man... why cant rust have optional args
 }
 
+fn fill_table() {
+    let conn = get_connection();
+    let statement_array = [
+        "INSERT INTO scanners (name, status, avaliable, blob) 
+         VALUES ('Front', 'Open', true,  None)",
+        "INSERT INTO scanners (name, status, avaliable, blob) 
+         VALUES ('Left',   'Open', false, None)",
+        "INSERT INTO scanners (name, status, avaliable, blob) 
+         VALUES ('Gross',  'Open', true,  None)",
+        "INSERT INTO scanners (name, status, avaliable, blob) 
+         VALUES ('Apple',  'Open', true,  None)",
+        "INSERT INTO scanners (name, status, avaliable, blob) 
+         VALUES ('Yanqui', 'Open', false, None)",
+        "INSERT INTO scanners (name, status, avaliable, blob) 
+         VALUES ('Fists',  'Open', true,  None)",
+    ];
+    for statement in statement_array.iter() {
+        conn.execute(statement,&[]).unwrap();
+    }
+    println!("Table has been filled!");
+}
+
 pub fn get_occupied_bytearray(conn: &Connection, id: &i32) -> Vec<u8> {
     match conn.query_row("SELECT occupied FROM scanners WHERE id=$1", &[id], |row| {
                     row.get(0)
@@ -39,8 +61,9 @@ pub fn get_occupied_bytearray(conn: &Connection, id: &i32) -> Vec<u8> {
                     
                     Error::SqliteFailure(err,err_string) => match err_string.unwrap().as_ref()
                     {
-                        "no such table: scanners"   => panic!("Scanner table doesn't
-                                                              exist! run create_table()"),
+                        "no such table: scanners"   => 
+                        panic!("Scanner table doesn't exist! run create_table()"),
+
                         // Big ole' OR statement for handling malformed database
                         "no such column: id"        |
                         "no such column: name"      |
@@ -49,11 +72,8 @@ pub fn get_occupied_bytearray(conn: &Connection, id: &i32) -> Vec<u8> {
                         "no such column: occupied"  =>
                             panic!("Malformed database! not all columns have been createdtry running create_table()"),
 
-
                     _ => panic!("SQLITE FAILURE IN RETREIVING BYTEARRAY"),
                     },
-
-
 
                     _ => { println!("{:?}", &why);
                             panic!(why);
@@ -64,13 +84,14 @@ pub fn get_occupied_bytearray(conn: &Connection, id: &i32) -> Vec<u8> {
 }
 
 pub fn print_all_scanner(conn: &Connection) {
-    let mut stmt = conn.prepare("SELECT id, name, status, open, occupied FROM scanners").unwrap();
+    let mut stmt = conn.prepare("SELECT id, name, status, avaliable, occupied 
+                                 FROM scanners").unwrap();
     let scanners = stmt.query_map(&[], |row| {
         Scanner {
             id: row.get(0),
             name: row.get(1),
             status: row.get(2),
-            open: row.get(3),
+            avaliable: row.get(3),
             occupied: row.get(4)
         }
     }).unwrap();
@@ -78,7 +99,10 @@ pub fn print_all_scanner(conn: &Connection) {
     for sql_scanner in scanners {
         let scanner: Scanner = sql_scanner.unwrap();
         print!("Found scanner #{:?}\n   Openable by: ", scanner.id);
-        print!("{:?}\n", string::read_output_blob(&scanner.occupied))
+
+        for i in string::read_output_blob(&scanner.occupied) {
+            print!("{:?}\n",i);
+        }
     }
 }
 
@@ -89,18 +113,22 @@ fn test_insert() {
         id: 0,
         name: "Front door".to_string(),
         status: "Working normally".to_string(),
-        open: false,
+        avaliable: false,
         occupied: string::prepare_str_vec(&vec!("hafd","hudf")),
     };
 
-    conn.execute("INSERT INTO scanners (name, status, open, occupied)
+    conn.execute("INSERT INTO scanners (name, status, avaliable, occupied)
                   VALUES ($1, $2, $3, $4)",
                  &[&test_scan.name, &test_scan.status, 
-                 &test_scan.open, &test_scan.occupied]).unwrap();
+                 &test_scan.avaliable, &test_scan.occupied]).unwrap();
+
     print_all_scanner(&conn);
+    
+    conn.close().unwrap();
 }
 
 pub fn main() {
-    test_insert();
+    print_all_scanner(&get_connection());
 }
+
 
